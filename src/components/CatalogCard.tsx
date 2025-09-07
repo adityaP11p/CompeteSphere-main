@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CatalogItem, Lesson, MentorshipSlot, UUID } from '../types'
 import { fetchLessonsForItem, fetchMentorshipSlots } from '../api/catalog'
 import { supabase } from '../lib/supabase'
+import { bookMentorshipSlot, cancelMentorshipBooking } from '../api/creator'
 
 type Props = {
   item: CatalogItem
@@ -267,6 +268,57 @@ export default function CatalogCard({ item, onBuy, currentUserId }: Props) {
                   {s.ends_at ? new Date(s.ends_at).toLocaleString() : 'TBD'}
                 </span>
                 <span className="opacity-70">{s.seats_taken}/{s.capacity} booked</span>
+                <span className="flex items-center gap-2">
+                  <span className="opacity-70">{s.seats_taken}/{s.capacity} booked</span>
+
+                  {currentUserId && (
+                    <>
+                      {hasAccess ? (
+                        <button
+                          className="px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600"
+                          onClick={async () => {
+                            try {
+                              // cancel any booking by this user for this slot
+                              const { data: booking } = await supabase
+                                .from('mentorship_bookings')
+                                .select('id')
+                                .eq('slot_id', s.id)
+                                .eq('buyer_id', currentUserId)
+                                .maybeSingle()
+
+                              if (booking) {
+                                await cancelMentorshipBooking(booking.id)
+                                alert('Booking cancelled')
+                                await checkAccessAndLoad()
+                              }
+                            } catch (err) {
+                              console.error('cancel booking error', err)
+                              alert('Failed to cancel booking')
+                            }
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      ) : (
+                        <button
+                          className="px-2 py-1 rounded bg-green-600 text-white text-xs hover:bg-green-700"
+                          onClick={async () => {
+                            try {
+                              await bookMentorshipSlot(s.id as UUID, currentUserId as UUID)
+                              alert('Slot booked!')
+                              await checkAccessAndLoad()
+                            } catch (err) {
+                              console.error('booking error', err)
+                              alert('Failed to book slot')
+                            }
+                          }}
+                        >
+                          Book
+                        </button>
+                      )}
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
@@ -275,6 +327,18 @@ export default function CatalogCard({ item, onBuy, currentUserId }: Props) {
           {hasAccess === false && (
             <div className="text-sm text-red-600 mt-2">
               You have not booked a slot for this mentorship.
+            </div>
+          )}
+          {hasAccess === true && item.metadata?.meeting_link && (
+            <div className="mt-4">
+              <a
+                href={item.metadata.meeting_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Join Mentorship Session
+              </a>
             </div>
           )}
         </div>

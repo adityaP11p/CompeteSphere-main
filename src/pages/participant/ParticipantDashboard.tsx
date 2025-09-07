@@ -1,10 +1,54 @@
-import React from 'react'
-import { Trophy, Target, Calendar, Medal, Users, TrendingUp } from 'lucide-react'
+import React, {useState, useEffect} from 'react'
+import { Trophy, Target, Calendar, Medal, Users, TrendingUp, BookOpen, Video } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
+import type { CatalogItem, MentorshipSlot } from '../../types'
 
 export const ParticipantDashboard: React.FC = () => {
   const { profile } = useAuth()
+  const [enrolledCourses, setEnrolledCourses] = useState<CatalogItem[]>([])
+  const [bookedMentorships, setBookedMentorships] = useState<(CatalogItem & { slot: MentorshipSlot | null })[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      if (!profile?.id) return
+      setLoading(true)
+
+      // Fetch enrolled courses
+      const { data: courses, error: coursesErr } = await supabase
+        .from('enrollments')
+        .select(`
+          item:catalog_items(*)
+        `)
+        .eq('buyer_id', profile.id)
+
+      if (coursesErr) console.error('Error fetching courses', coursesErr)
+      else setEnrolledCourses(courses?.map(c => c.item) || [])
+
+      // Fetch booked mentorships
+      const { data: mentorships, error: mentorErr } = await supabase
+        .from('mentorship_bookings')
+        .select(`
+          slot:mentorship_slots(*, item:catalog_items(*))
+        `)
+        .eq('buyer_id', profile.id)
+
+      if (mentorErr) console.error('Error fetching mentorships', mentorErr)
+      else {
+        const formatted = mentorships?.map(m => ({
+          ...m.slot.item,
+          slot: m.slot
+        })) || []
+        setBookedMentorships(formatted)
+      }
+
+      setLoading(false)
+    }
+
+    loadData()
+  }, [profile?.id])
 
   return (
     <Layout showSidebar>
@@ -86,6 +130,91 @@ export const ParticipantDashboard: React.FC = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center">
+              <BookOpen className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Enrolled Courses</p>
+                <p className="text-2xl font-bold text-gray-900">{enrolledCourses.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center">
+              <Video className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Mentorships</p>
+                <p className="text-2xl font-bold text-gray-900">{bookedMentorships.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enrolled Courses */}
+        <div className="mb-8 bg-white rounded-lg shadow-md">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <BookOpen className="h-5 w-5 mr-2" />
+              My Courses
+            </h2>
+          </div>
+          <div className="p-6">
+            {loading ? (
+              <p>Loading...</p>
+            ) : enrolledCourses.length === 0 ? (
+              <p className="text-gray-600">You haven’t enrolled in any courses yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {enrolledCourses.map(course => (
+                  <li key={course.id} className="border rounded p-3 hover:bg-gray-50">
+                    <div className="font-semibold">{course.title}</div>
+                    <p className="text-sm text-gray-600">{course.description}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Booked Mentorships */}
+        <div className="mb-8 bg-white rounded-lg shadow-md">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Video className="h-5 w-5 mr-2" />
+              My Mentorships
+            </h2>
+          </div>
+          <div className="p-6">
+            {loading ? (
+              <p>Loading...</p>
+            ) : bookedMentorships.length === 0 ? (
+              <p className="text-gray-600">You haven’t booked any mentorships yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {bookedMentorships.map(m => (
+                  <li key={m.id} className="border rounded p-3 hover:bg-gray-50">
+                    <div className="font-semibold">{m.title}</div>
+                    <p className="text-sm text-gray-600">
+                      {m.slot.starts_at ? new Date(m.slot.starts_at).toLocaleString() : 'TBD'} – 
+                      {m.slot.ends_at ? new Date(m.slot.ends_at).toLocaleString() : 'TBD'}
+                    </p>
+                    {m.metadata?.meeting_link && (
+                      <a
+                        href={m.metadata.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline text-sm mt-1 inline-block"
+                      >
+                        Join Session
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
           {/* Recent Activity */}
           <div className="bg-white rounded-lg shadow-md">
             <div className="px-6 py-4 border-b border-gray-200">

@@ -14,11 +14,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, profile, loading, error } = useAuth()
   const location = useLocation()
 
-  if (!user) {
-    // Not logged in
-    return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -29,6 +24,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       </div>
     )
   }
+
+  if (!user) {
+    // Not logged in
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }  
 
   if (error) {
     return (

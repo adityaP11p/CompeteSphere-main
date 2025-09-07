@@ -18,6 +18,9 @@ import TeamJoinRequests from './pages/TeamJoinRequests'
 import LearningGrid from './components/LearningGrid'
 import AdminPage from './pages/Admin'
 import CreatorDashboard from './pages/CreatorDashboard'
+import TeamChatPage from './pages/TeamChatPage'
+import DirectChatPage from './pages/DirectChatPage'
+import { MessagesPage } from './pages/MessagesPage'
 // 404 Page Component
 const NotFound: React.FC = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -49,6 +52,9 @@ function App() {
             {/* <Route path="/teams/:competitionId" element={<TeamFinder />} /> */}
             <Route path="/learning" element={<LearningGrid />} />
             {/* <Route path="/admin" element={<AdminPage />} /> */}
+            <Route path="/teams/:teamId/chat" element={<TeamChatPage />} />
+            <Route path="/chat/:userId" element={<DirectChatPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
             {/* Protected Routes */}
             <Route
               path="/profile"

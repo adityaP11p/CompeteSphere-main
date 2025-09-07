@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Calendar, Users, Trophy, Clock, MapPin, ChevronLeft, ExternalLink } from 'lucide-react'
 import { Layout } from '../components/layout/Layout'
 import { useAuth } from '../contexts/AuthContext'
@@ -57,6 +57,16 @@ export const CompetitionDetails: React.FC = () => {
     setShowTeamFinder(true);
   }
 
+  const openDirectChat = (userId: string) => {
+    if (!userId) return
+    navigate(`/chat/${userId}`)
+  }
+
+  // const openTeamChat = () => {
+  //   if (team?.id) {
+  //     navigate(`/teams/${team.id}/chat`)
+  //   }
+  // }
 
   useEffect(() => {
     if (id) {
@@ -351,12 +361,24 @@ export const CompetitionDetails: React.FC = () => {
             {isParticipant && (
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Team</h3>
+                {/* GROUP CHAT BUTTON: shown when user is part of a team */}
+                {isRegistered && team?.id && (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/teams/${team.id}/chat`}
+                      className="mt-2 inline-block bg-blue-500 text-white px-3 py-1 rounded-lg"
+                    >
+                      Group Chat
+                    </Link>
+                  </div>
+                )}
+            
                 <ul className="space-y-2">
                   {teamMembers.map((member) => (
                     <li
                       key={member.user_id}
                       className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg"
-                    >
+                    >                      
                       <span>
                         {member.profiles?.full_name || member.profiles?.email}
                       </span>
@@ -365,8 +387,17 @@ export const CompetitionDetails: React.FC = () => {
                           Captain
                         </span>
                       )}
+                      {/* {isCaptain && member.user_id !== user?.id && (
+                        <button
+                          onClick={() => openDirectChat(member.user_id)}
+                          className="ml-4 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors text-sm"
+                        >
+                          Chat
+                        </button>
+                      )} */}
                     </li>
                   ))}
+                  
                 </ul>
 
                 {/* Show correct status */}
@@ -403,6 +434,7 @@ export const CompetitionDetails: React.FC = () => {
                 onClose={() => setShowTeamFinder(false)}
                 initialMode={teamFinderMode}
                 existingTeamId={team?.id}
+                onChat={(userId: string) => openDirectChat(userId)}
               />
             )}
 

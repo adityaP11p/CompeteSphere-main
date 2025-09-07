@@ -25,12 +25,13 @@ type TeamWithNeeds = Team & { needs?: TeamNeed | null };
 interface TeamFinderProps {
   competitionId: string;
   onClose: () => void;
-  initialMode?: "choose" | "create";
+  initialMode?: "choose" | "create" | "join";
   existingTeamId?: UUID | null;
+  onChat?: (userId: string) => void;
 }
 
 // ---------- Component ----------
-const TeamFinder: React.FC<TeamFinderProps> = ({ competitionId, onClose, initialMode = "choose", existingTeamId = null }) => {
+const TeamFinder: React.FC<TeamFinderProps> = ({ competitionId, onClose, initialMode = "choose", existingTeamId = null, onChat }: TeamFinderProps) => {
   const { user } = useAuth();
   const [mode, setMode] = useState<"choose" | "create" | "join">(initialMode || "choose");
   
@@ -552,6 +553,7 @@ const TeamFinder: React.FC<TeamFinderProps> = ({ competitionId, onClose, initial
                         <div className="font-medium">{team.name}</div>
                         <div className="text-xs text-gray-500">Match score: {Math.round(score * 100)}%</div>
                       </div>
+                      
                       <button onClick={() => joinSelectedTeam(team.id)} className="px-3 py-1.5 rounded-lg bg-green-600 text-white">Join</button>
                     </div>
                   ))}
@@ -642,6 +644,12 @@ const TeamFinder: React.FC<TeamFinderProps> = ({ competitionId, onClose, initial
                               Match score: {c.score}%
                             </div>
                           </div>
+                          <button
+                            onClick={() => onChat?.(c.user_id)}
+                            className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                          >
+                            Chat
+                          </button>
                           <button
                             onClick={() =>
                               sendInvite(existingTeamId || createdTeamId, c.user_id)

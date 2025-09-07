@@ -23,6 +23,69 @@
 // =============================================
 import { supabase } from '../lib/supabase'
 import type { CatalogItem, Lesson, MentorshipSlot, UUID } from '../types'
+//import type { UUID } from '../types'
+
+// Book a slot for a user
+export async function bookMentorshipSlot(slot_id: UUID, buyer_id: UUID) {
+  const { data, error } = await supabase
+    .from('mentorship_bookings')
+    .insert({ slot_id, buyer_id, status: 'reserved' })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Cancel a booking
+export async function cancelMentorshipBooking(bookingId: UUID) {
+  const { data, error } = await supabase
+    .from('mentorship_bookings')
+    .update({ status: 'cancelled' })
+    .eq('id', bookingId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Confirm a booking (e.g., after payment success)
+export async function confirmMentorshipBooking(bookingId: UUID) {
+  const { data, error } = await supabase
+    .from('mentorship_bookings')
+    .update({ status: 'confirmed' })
+    .eq('id', bookingId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Fetch all bookings for a slot
+export async function fetchBookingsForSlot(slot_id: UUID) {
+  const { data, error } = await supabase
+    .from('mentorship_bookings')
+    .select('*, profiles!inner(display_name, avatar_url)')
+    .eq('slot_id', slot_id)
+
+  if (error) throw error
+  return data
+}
+
+// Fetch user’s bookings (for dashboard)
+export async function fetchMyMentorshipBookings(buyer_id: UUID) {
+  const { data, error } = await supabase
+    .from('mentorship_bookings')
+    .select('*, mentorship_slots(*, catalog_items(title, metadata))')
+    .eq('buyer_id', buyer_id)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
 
 export async function fetchMyCatalogItems(userId: UUID): Promise<CatalogItem[]> {
   const { data, error } = await supabase

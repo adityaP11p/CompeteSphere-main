@@ -469,3 +469,35 @@ create index if not exists idx_team_join_requests_team_id on team_join_requests(
 alter table team_invitations
 add constraint unique_invite unique(team_id, user_id);
 
+
+-- Enable row-level security
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Policy for SELECT operations
+CREATE POLICY objects_select_policy ON storage.objects FOR SELECT
+USING (auth.role() = 'authenticated');
+
+-- Policy for INSERT operations WITH CHECK !
+CREATE POLICY objects_insert_policy ON storage.objects FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
+
+-- Policy for UPDATE operations
+CREATE POLICY objects_update_policy ON storage.objects FOR UPDATE
+USING (auth.role() = 'authenticated');
+
+-- Policy for DELETE operations
+CREATE POLICY objects_delete_policy ON storage.objects FOR DELETE
+USING (auth.role() = 'authenticated');
+
+
+create table if not exists direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references profiles(id) on delete cascade,
+  recipient_id uuid not null references profiles(id) on delete cascade,
+  related_team_id uuid references teams(id) on delete cascade, -- optional context
+  message text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_direct_messages_pair 
+  on direct_messages (sender_id, recipient_id, created_at);
