@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, MapPin, Edit2, Save, X, Github, Twitter, Linkedin, Globe, Star } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
-import { SkillVerification } from '../components/SkillVerification'; 
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -116,8 +115,6 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Skill Verification Section */}
-        <SkillVerification />
       </div>
     </Layout>
   );

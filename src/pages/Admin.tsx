@@ -1,3 +1,7 @@
+/** TILL NOW USELESS */
+
+
+
 import { useEffect, useState } from 'react'
 import type { CatalogItem } from '../types'
 import { supabase } from '../lib/supabase'
